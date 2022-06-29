@@ -2,22 +2,27 @@ package htgraph
 
 //Implemented as an adjacency list
 type Graph[T comparable] struct {
-	nodes map[*Node[T]]([]*Node[T])
+	nodes map[*Node[T]]([]Edge[T])
+}
+
+type Edge[T any] struct {
+	target *Node[T]
+	source *Node[T]
+	weight float64
 }
 
 type Node[T any] struct {
-	Value  T
-	Weight float64
+	Value T
 }
 
 func (g *Graph[T]) NewGraph() Graph[T] {
 	return Graph[T]{
-		nodes: make(map[*Node[T]]([]*Node[T])),
+		nodes: make(map[*Node[T]]([]Edge[T])),
 	}
 }
 
 func (g *Graph[T]) AddNode(n *Node[T]) {
-	g.nodes[n] = []*Node[T]{}
+	g.nodes[n] = []Edge[T]{}
 }
 
 func (g *Graph[T]) RemoveNode(n *Node[T]) {
@@ -25,6 +30,10 @@ func (g *Graph[T]) RemoveNode(n *Node[T]) {
 }
 
 func (g *Graph[T]) AddEdge(source *Node[T], target *Node[T]) {
+	g.AddWeightedEdge(source, target, 0)
+}
+
+func (g *Graph[T]) AddWeightedEdge(source *Node[T], target *Node[T], weight float64) {
 	if !g.Contains(source) {
 		g.AddNode(source)
 	}
@@ -33,13 +42,15 @@ func (g *Graph[T]) AddEdge(source *Node[T], target *Node[T]) {
 		g.AddNode(target)
 	}
 
-	g.nodes[source] = append(g.nodes[source], target)
+	edge := Edge[T]{source: source, target: target, weight: weight}
+
+	g.nodes[source] = append(g.nodes[source], edge)
 }
 
 func (g *Graph[T]) RemoveEdge(source *Node[T], target *Node[T]) {
 	edges := g.nodes[source]
 	for i, node := range edges {
-		if node == target {
+		if node.target == target {
 			edges[i] = edges[len(edges)-1]
 			g.nodes[source] = edges[:len(edges)-1]
 		}
@@ -49,7 +60,7 @@ func (g *Graph[T]) RemoveEdge(source *Node[T], target *Node[T]) {
 func (g *Graph[T]) HasEdge(source *Node[T], target *Node[T]) bool {
 	edges := g.nodes[source]
 	for _, edge := range edges {
-		if edge == target {
+		if edge.target == target {
 			return true
 		}
 	}
